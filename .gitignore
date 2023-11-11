@@ -1,0 +1,7 @@
+.vscode/
+logs/:
+__pycache__/
+run.sh
+expert_traj/:
+*.pkl
+*.pth
