@@ -75,6 +75,10 @@ class GAIL(PPO):
         # Update PPO using estimated rewards.
         self.update_ppo(
             states, actions, rewards, dones, log_pis, next_states, writer)
+        
+        # clear buffer
+        self.buffer.clear()
+
 
     def update_disc(self, states, actions, states_exp, actions_exp, writer):
         # Output of discriminator is (-inf, inf), not [0, 1].

@@ -101,64 +101,76 @@ class Buffer(SerializedBuffer):
 
 class RolloutBuffer:
 
-    def __init__(self, buffer_size, state_shape, action_shape, device, mix=1):
+    def __init__(self, buffer_size, device):
         self._n = 0         # number of all samples
         self._c = 0         # number of completed samples
+        self.buffer_size = buffer_size
         self.device = device
 
-        self.states = {}
-        self.actions = {}
-        self.rewards = {}
-        self.dones = {}
-        self.log_pis = {}
-        self.next_states = {}
+        self.all_states = {}
+        self.all_actions = {}
+        self.all_rewards = {}
+        self.all_dones = {}
+        self.all_log_pis = {}
+        self.all_next_states = {}
 
-        # self.states = [None for i in range(self.total_size)]
-        # self.actions = torch.empty(
-        #     (self.total_size, *action_shape), dtype=torch.float, device=device)
-        # self.rewards = torch.empty(
-        #     (self.total_size, 1), dtype=torch.float, device=device)
-        # self.dones = torch.empty(
-        #     (self.total_size, 1), dtype=torch.float, device=device)
-        # self.log_pis = torch.empty(
-        #     (self.total_size, 1), dtype=torch.float, device=device)
-        # self.next_states = [None for i in range(self.total_size)]
-        # self.next_states = torch.empty(
-        #     (self.total_size, *state_shape), dtype=torch.float, device=device)
+        self.states = []
+        self.actions = []
+        self.rewards = []
+        self.dones = []
+        self.log_pis = []
+        self.next_states = []
 
     def append(self, states, actions, rewards, dones, log_pis, next_states):
         for id in states.keys():
             if id not in self.states.keys():                           # create new key
-                self.states[id] = [states[id].to(self.device)]
-                self.actions[id] = [torch.from_numpy(actions[id])]
-                self.rewards[id] = [float(rewards[id])]
-                self.dones[id] = [float(dones[id])]
-                self.log_pis[id] = [next_states[id].to(self.device)]
+                self.all_states[id] = [states[id].to(self.device)]
+                self.all_actions[id] = [torch.from_numpy(actions[id])]
+                self.all_rewards[id] = [float(rewards[id])]
+                self.all_dones[id] = [float(dones[id])]
+                self.all_log_pis[id] = [next_states[id].to(self.device)]
             else:                                                      # fill in existing key
-                self.states[id].append(states[id].to(self.device))
-                self.actions[id].append(torch.from_numpy(actions[id]))
-                self.rewards[id].append(float(rewards[id]))
-                self.dones[id].append(float(dones[id]))
-                self.log_pis[id].append(next_states[id].to(self.device))
+                self.all_states[id].append(states[id].to(self.device))
+                self.all_actions[id].append(torch.from_numpy(actions[id]))
+                self.all_rewards[id].append(float(rewards[id]))
+                self.all_dones[id].append(float(dones[id]))
+                self.all_log_pis[id].append(next_states[id].to(self.device))
+            # move trajectories that completed to the buffer
+            if dones[id] & len(self.all_actions[id])>1:
+                self.states.extend(self.all_states[id])
+                del self.all_states[id]
+                self.actions.extend(self.all_actions[id])
+                del self.all_actions[id]
+                self.rewards.extend(self.all_rewards[id])
+                del self.all_rewards[id]
+                self.dones.extend(self.all_dones[id])
+                del self.all_dones[id]
+                self.log_pis.extend(self.all_log_pis[id])
+                del self.all_log_pis[id]
+                self.next_states.extend(self.all_states[id])
+                del self.all_states[id]
 
         self._n += len(states.keys())
+        self._c = len(self.states.keys())  # current buffer length
+
+    def is_full(self):
+        return self._c >= self.buffer_size
 
     def get(self):
-        assert self._p % self.buffer_size == 0
-        start = (self._p - self.buffer_size) % self.total_size
-        idxes = slice(start, start + self.buffer_size)
+        assert self._c >= self.buffer_size
+        idxes = slice(0, self.buffer_size)
         return (
             self.states[idxes],
-            self.actions[idxes],
-            self.rewards[idxes],
-            self.dones[idxes],
-            self.log_pis[idxes],
+            torch.tensor(self.actions,dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(self.rewards,dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(self.dones,dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(self.log_pis,dtype=torch.float, device=self.device)[idxes],
             self.next_states[idxes]
         )
 
     def sample(self, batch_size):
-        assert self._p % self.buffer_size == 0
-        idxes = np.random.randint(low=0, high=self._n, size=batch_size)
+        assert self._c >= self.buffer_size
+        idxes = np.random.randint(low=0, high=self.buffer_size, size=batch_size)
 
         states, next_states = [], []
         for i in idxes:
@@ -169,20 +181,22 @@ class RolloutBuffer:
 
         return (
             states,
-            self.actions[idxes],
-            self.rewards[idxes],
-            self.dones[idxes],
-            self.log_pis[idxes],
+            torch.tensor(self.actions,dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(self.rewards,dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(self.dones,dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(self.log_pis,dtype=torch.float, device=self.device)[idxes],
             next_states
         )
     
     def clear(self):
-        self.states = {}
-        self.actions = {}
-        self.rewards = {}
-        self.dones = {}
-        self.log_pis = {}
-        self.next_states = {}
+        self.states = []
+        self.actions = []
+        self.rewards = []
+        self.dones = []
+        self.log_pis = []
+        self.next_states = []
+
+
 
 class SeparatedRolloutBuffer:
 

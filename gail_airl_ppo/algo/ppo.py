@@ -32,12 +32,9 @@ class PPO(Algorithm):
         super().__init__(state_shape, action_shape, device, seed, gamma)
 
         # Rollout buffer.
-        self.buffer = RolloutBuffer(        # RolloutBuffer
+        self.buffer = RolloutBuffer(        
             buffer_size=rollout_length,
-            state_shape=state_shape,
-            action_shape=action_shape,
-            device=device,
-            mix=mix_buffer
+            device=device
         )
 
         self.actor = GraphStateIndependentPolicy(
@@ -64,7 +61,8 @@ class PPO(Algorithm):
 
 
     def is_update(self, step):
-        return step % self.rollout_length == 0
+        # return step % self.rollout_length == 0
+        return self.buffer.is_full()
 
     def step(self, env, state, t, step):
         t += 1
