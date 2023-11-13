@@ -74,6 +74,14 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
         self.collisions = 0
         # self.companys = 0
 
+        # compute r_matrix and cr_matrix for each agent
+        self.r_matrix = {}
+        self.cr_matrix = {}
+        for id in self.trajectorys.keys():
+            goal_v = np.array(self.trajectorys[id][-1][:2])-np.array(self.trajectorys[id][0][:2])
+            self.r_matrix[id] = self._rotate_matrix_v(goal_v)
+            self.cr_matrix[id] = self._counter_rotate_matrix_v(goal_v)
+
         # gym action space & observation sapce
         self.action_space = gym.spaces.Box(low=-2, high=2, shape=(2,), dtype=np.float32)
         if self.with_last_speed:
@@ -120,7 +128,8 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
 
         return self._get_observation()
 
-    def step(self, action):  # step function for the replay mode
+    # useless single agent mode
+    def step_single(self, action):  # step function for the replay mode
         # update frame
         self._update_frame_number()
 
@@ -191,61 +200,20 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
 
 
 
-
-    def _get_new_position(self, id, policy):
-        current_position = np.array([self.current_frame[id][0], self.current_frame[id][1]])
-
-        # get unique r_matrix
-        goal_v = np.array(self.trajectorys[id][-1][:2])-np.array(self.trajectorys[id][0][:2])
-        r_matrix = self._rotate_matrix_v(goal_v)
-        cr_matrix = self._counter_rotate_matrix_v(goal_v)
-
-        state = self._get_ar_relative_graph_observation(id, r_matrix, self.frame_number, current_position, self.current_frame, self.past_frames)
-        action = policy.exploit(state)
-
-        dx = action[0]*self.time_interval
-        dy = action[1]*self.time_interval
-
-        dx, dy  = np.dot([dx,dy],cr_matrix)
-
-        new_position = current_position + np.array([dx, dy])
-
-        return id, new_position
-
     # from start frame to end frame of target agent, render all agents by policy
-    def step_multi(self, action_n, policy): # action_n means "action not needed"
-        reward = 0
-        done = False
+    def step(self, actions:dict, policy): # action_n means "action not needed"
+        rewards = 0
         self.time_steps += 1
 
-        # for frame_id in range(start_frame, end_frame+1, self.frame_interval):
-        # generate next frame
-        # tmp = []
-        # with concurrent.futures.ProcessPoolExecutor(max_workers=3) as executor:
-        #     to_dos = []
-        #     for id in self.current_frame.keys():
-        #         future = executor.submit(self._get_new_position, id, policy)
-        #         to_dos.append(future)
-        #     for future in concurrent.futures.as_completed(to_dos):
-        #         nid, new_position = future.result()
-        #         # next_frame[nid] = new_position
-        #         tmp.append(new_position)
+        # generate next frame and next_states
         next_frame = {}
         for id in self.current_frame.keys():
             current_position = np.array([self.current_frame[id][0], self.current_frame[id][1]])
 
-            # get unique r_matrix
-            goal_v = np.array(self.trajectorys[id][-1][:2])-np.array(self.trajectorys[id][0][:2])
-            r_matrix = self._rotate_matrix_v(goal_v)
-            cr_matrix = self._counter_rotate_matrix_v(goal_v)
+            dx = actions[id][0]*self.time_interval
+            dy = actions[id][1]*self.time_interval
 
-            state = self._get_ar_relative_graph_observation(id, r_matrix, self.frame_number, current_position, self.current_frame, self.past_frames)
-            action = policy.exploit(state)
-
-            dx = action[0]*self.time_interval
-            dy = action[1]*self.time_interval
-
-            dx, dy  = np.dot([dx,dy],cr_matrix)
+            dx, dy  = np.dot([dx,dy],self.cr_matrix[id])
 
             new_position = current_position + np.array([dx, dy])
 
@@ -266,15 +234,21 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
                 del self.current_frame[id]
         # 压栈
         self.past_frames[self.frame_number] = self.current_frame
+
+        # just for evaluation
         self.target_traj.append(self.current_frame[self.agent_id])
         self.new_traj.append(self.current_frame[self.agent_id])
 
 
-
-        # end or continue
-        dist = np.linalg.norm(np.array(self.current_frame[self.agent_id]) - np.array(self.goal_data[self.agent_id]))
-        if dist < self.target_circle_width:
-            done = True
+        # compute dones for each agent
+        dones = {}
+        for id in self.current_frame.keys():
+            dist = np.linalg.norm(np.array(self.current_frame[id]) - np.array(self.goal_data[id]))
+            # end conditions: reach goal or end frame
+            if dist < self.target_circle_width or self.frame_number == self.trajectorys[id][-1][2]:
+                dones[id] = True
+            else:
+                dones[id] = False
         # end condition2
         if self.test_flag:
             if self.frame_number == self.end_frame:
@@ -293,7 +267,7 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
         r_matrix = self._rotate_matrix_v(goal_v)
         next_state = self._get_ar_relative_graph_observation(self.agent_id, r_matrix, self.frame_number, current_position, self.current_frame, self.past_frames)
         
-        return next_state, reward, done, {}
+        return next_states, rewards, dones, {}
     
 
     # from start frame to end frame of target agent, render all agents by policy
@@ -655,6 +629,26 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
 
         return trajectorys, frame_data, start_data, goal_data
     
+    def _get_new_position(self, id, policy):
+        current_position = np.array([self.current_frame[id][0], self.current_frame[id][1]])
+
+        # get unique r_matrix
+        goal_v = np.array(self.trajectorys[id][-1][:2])-np.array(self.trajectorys[id][0][:2])
+        r_matrix = self._rotate_matrix_v(goal_v)
+        cr_matrix = self._counter_rotate_matrix_v(goal_v)
+
+        state = self._get_ar_relative_graph_observation(id, r_matrix, self.frame_number, current_position, self.current_frame, self.past_frames)
+        action = policy.exploit(state)
+
+        dx = action[0]*self.time_interval
+        dy = action[1]*self.time_interval
+
+        dx, dy  = np.dot([dx,dy],cr_matrix)
+
+        new_position = current_position + np.array([dx, dy])
+
+        return id, new_position
+
 
     # Choose the type of observation
     def _get_observation(self):
