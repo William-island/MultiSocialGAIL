@@ -48,7 +48,7 @@ class Trainer:
 
         for step in range(1, self.num_steps + 1):
             # Pass to the algorithm to update state and episode timestep.
-            pbar.update(1)
+            # pbar.update(1)
             states, t = self.algo.step(self.env, states, t, step)
 
             # Update the algorithm whenever ready.

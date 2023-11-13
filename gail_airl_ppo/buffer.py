@@ -123,7 +123,7 @@ class RolloutBuffer:
 
     def append(self, states, actions, rewards, dones, log_pis, next_states):
         for id in states.keys():
-            if id not in self.states.keys():                           # create new key
+            if id not in self.all_states.keys():                           # create new key
                 self.all_states[id] = [states[id].to(self.device)]
                 self.all_actions[id] = [torch.from_numpy(actions[id])]
                 self.all_rewards[id] = [float(rewards[id])]
@@ -151,9 +151,10 @@ class RolloutBuffer:
                 del self.all_states[id]
 
         self._n += len(states.keys())
-        self._c = len(self.states.keys())  # current buffer length
+        self._c = len(self.states)  # current buffer length
 
     def is_full(self):
+        print(self._c)
         return self._c >= self.buffer_size
 
     def get(self):

@@ -112,9 +112,9 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
         self.collisions = 0
         self.companys = 0
 
-        goal_v = np.array(self.trajectorys[self.agent_id][-1][:2])-np.array(self.trajectorys[self.agent_id][0][:2])
-        self.r_matrix = self._rotate_matrix_v(goal_v)
-        self.cr_matrix = self._counter_rotate_matrix_v(goal_v)
+        # goal_v = np.array(self.trajectorys[self.agent_id][-1][:2])-np.array(self.trajectorys[self.agent_id][0][:2])
+        # self.r_matrix = self._rotate_matrix_v(goal_v)
+        # self.cr_matrix = self._counter_rotate_matrix_v(goal_v)
 
         # for the multi-agent mode
         self.current_frame = {}
@@ -125,6 +125,8 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
         # init
         self.past_frames[self.frame_number] = self.current_frame
         self.target_traj.append(self.current_frame[self.agent_id])
+        # reach flags: reach end of time of reach goal
+        self.reach_flags = {id:False for id in self.trajectorys.keys()}
 
         return self._get_multi_observations()
 
@@ -132,7 +134,8 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
     
 
     # from start frame to end frame of target agent, render all agents by policy
-    def step(self, actions:dict, policy): 
+    def step(self, actions:dict): 
+        extra_info = {}
         self.time_steps += 1
 
         # generate next frame and next_states
@@ -148,55 +151,71 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
             new_position = current_position + np.array([dx, dy])
 
             next_frame[id] = new_position
-        
         # update frame
         self.current_frame = next_frame
         self._update_frame_number()
-        
-        present_agent = np.array(list(self.frame_data[self.frame_number].keys()))
-        # 添加新行人进当前帧, 删除旧行人
-        last_present_agent = np.array(list(self.current_frame.keys()))
-        for id in np.setdiff1d(present_agent, last_present_agent):
-            self.current_frame[id] = np.array(self.frame_data[self.frame_number][id][:2])
-        for id in np.setdiff1d(last_present_agent, present_agent):
-            if id!=self.agent_id:
-                del self.current_frame[id]
-        # 压栈
-        self.past_frames[self.frame_number] = self.current_frame
-        # just for evaluation
-        self.target_traj.append(self.current_frame[self.agent_id])
-        self.new_traj.append(self.current_frame[self.agent_id])
-        # compute dones for each agent
-        dones = {}
-        for id in self.current_frame.keys():
-            if self.frame_number == self.trajectorys[id][-1][2]: # end condition1: end frame
-                dones[id] = True
-            else:
-                dist = np.linalg.norm(np.array(self.current_frame[id]) - np.array(self.goal_data[id]))
-                if dist < self.target_circle_width: # end conditions2: reach goal
-                    dones[id] = True
-                else:
-                    dones[id] = False
-        
-        
-        # get next states
-        next_states = self._get_multi_observations()
 
+        
         # compute rewards for each agent: useless actually
         rewards = {}
         for id in self.current_frame.keys():
             rewards[id] = 0
+        
+        # save the current frame for all the agents in the last frame
+        self.past_frames[self.frame_number] = self.current_frame
+        extra_info['next_states_imaginary'] = self._get_multi_observations()
 
+        # compute dones for each agent
+        dones = {}
+        for id in list(self.current_frame.keys()):
+            if self.frame_number == self.trajectorys[id][-1][2]: # end condition1: end frame
+                dones[id] = True
+                self.reach_flags[id] = True
+                if id!=self.agent_id:
+                    del self.current_frame[id]
+            else:
+                dist = np.linalg.norm(np.array(self.current_frame[id]) - np.array(self.goal_data[id]))
+                if dist < self.target_circle_width: # end conditions2: reach goal
+                    dones[id] = True
+                    self.reach_flags[id] = True
+                    if id!=self.agent_id:
+                        del self.current_frame[id]
+                else:
+                    dones[id] = False
+
+        
+
+        # compute 
+        present_agent = np.array(list(self.frame_data[self.frame_number].keys()))
+        # 添加新行人进当前帧, 删除旧行人
+        last_present_agent = np.array(list(self.current_frame.keys()))
+        for id in np.setdiff1d(present_agent, last_present_agent):
+            if self.reach_flags[id]==False:
+                self.current_frame[id] = np.array(self.frame_data[self.frame_number][id][:2])
+        for id in np.setdiff1d(last_present_agent, present_agent):
+            if id!=self.agent_id:
+                del self.current_frame[id]
+        # 重新覆盖当前帧
+        self.past_frames[self.frame_number] = self.current_frame
+        # just for evaluation
+        self.target_traj.append(self.current_frame[self.agent_id])
+        self.new_traj.append(self.current_frame[self.agent_id])
+        # get next states
+        next_states = self._get_multi_observations()
+
+        
         # compute episode done info, based on the target agent
         dist = np.linalg.norm(np.array(self.current_frame[self.agent_id]) - np.array(self.goal_data[self.agent_id]))
         if dist < self.target_circle_width or self.frame_number == self.end_frame:
-            episode_done_info = True
-
+            episode_done = True
+        else:
+            episode_done = False
+        extra_info['episode_done'] = episode_done
 
         # secure check
         assert self.frame_number <= self.end_frame
         
-        return next_states, rewards, dones, episode_done_info    
+        return next_states, rewards, dones, extra_info    
 
     # from start frame to end frame of target agent, render all agents by policy
     def step_all(self, policy, flow_ids):
@@ -453,6 +472,17 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
 
 
 
+    # for the multi-agent mode
+    def _get_multi_observations(self)->dict:
+        # get next states
+        next_states = {}
+        for id in self.current_frame.keys():
+            current_position = np.array([self.current_frame[id][0], self.current_frame[id][1]])
+            next_state = self._get_ar_relative_graph_observation(id, self.r_matrix[id], self.frame_number, current_position, self.current_frame, self.past_frames)
+            # append next state
+            next_states[id] = next_state
+        return next_states
+
     def _valid_check_in_map(self):
         valid = True
 
@@ -483,7 +513,7 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
             grid_map[i] = True
         return grid_map
     
-    # 还没实现！
+    # not realized yet!
     def _gridmap_check(self):
         return True
 
