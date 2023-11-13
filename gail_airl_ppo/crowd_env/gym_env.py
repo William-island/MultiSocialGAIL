@@ -126,83 +126,13 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
         self.past_frames[self.frame_number] = self.current_frame
         self.target_traj.append(self.current_frame[self.agent_id])
 
-        return self._get_observation()
+        return self._get_multi_observations()
 
-    # useless single agent mode
-    def step_single(self, action):  # step function for the replay mode
-        # update frame
-        self._update_frame_number()
 
-        # update the position of target agent
-        # valid check: map & collision
-        reward = 0
-        done = False
-        self.time_steps += 1
-
-        # update new position , get position change via speed!!
-        # dx = action[0]
-        # dy = action[1]
-        dx = action[0]*self.time_interval
-        dy = action[1]*self.time_interval
-
-        dx, dy  = np.dot([dx,dy],self.cr_matrix)
-
-        new_position = np.array(self.current_position) + np.array([dx, dy])
-
-        # check map validation
-        if not self._valid_check_in_map():
-            new_position = self.current_position
-
-        # check collision 
-        for other, opos in self.frame_data[self.frame_number].items():
-            if self.agent_id != other:
-                dist = np.linalg.norm(new_position - np.array([opos[0],opos[1]]))
-                if dist < 2*self.agent_radius:
-                    self.collisions += 1
-                    ## handle collision：back to the old position and punish it
-                    # if self.entity_type:
-                    #     new_position = self.current_position # no step back
-                    # reward -= 1
-                    # if self._abs_angle([dx,dy],[opos[2],opos[3]])<=30:
-                    #     self.companys += 1
-                    # else:
-                    #     self.collisions += 1
-        self.current_position = new_position
-
-        self.new_traj.append(self.current_position)
-
-        # reward each step
-        # gt_x = self.frame_data[self.frame_number][self.agent_id][0]
-        # gt_y = self.frame_data[self.frame_number][self.agent_id][1]
-        # step_dist = np.linalg.norm(np.array(self.current_position) - np.array(gt_x, gt_y))
-        # reward -= step_dist
-
-        # end condition 1
-        dist = np.linalg.norm(np.array(self.current_position) - np.array(self.goal_data[self.agent_id]))
-        # self.ADE_list.append(dist)
-        if dist < self.target_circle_width:
-            # to the target circle
-            # reward += 10
-            done = True
-        # end condition2
-        if self.test_flag:
-            if self.frame_number == self.end_frame:
-                done = True
-        else:
-            if self.frame_number == self.end_frame + int(self.relaxed_steps*self.frame_interval):
-                done = True
-        # end condition 3
-        if self.time_steps > self._max_episode_steps:
-            done = True
-
-        return self._get_observation(), reward, done, {}
     
 
-
-
     # from start frame to end frame of target agent, render all agents by policy
-    def step(self, actions:dict, policy): # action_n means "action not needed"
-        rewards = 0
+    def step(self, actions:dict, policy): 
         self.time_steps += 1
 
         # generate next frame and next_states
@@ -223,7 +153,6 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
         self.current_frame = next_frame
         self._update_frame_number()
         
-        # 获取在场行人
         present_agent = np.array(list(self.frame_data[self.frame_number].keys()))
         # 添加新行人进当前帧, 删除旧行人
         last_present_agent = np.array(list(self.current_frame.keys()))
@@ -234,41 +163,40 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
                 del self.current_frame[id]
         # 压栈
         self.past_frames[self.frame_number] = self.current_frame
-
         # just for evaluation
         self.target_traj.append(self.current_frame[self.agent_id])
         self.new_traj.append(self.current_frame[self.agent_id])
-
-
         # compute dones for each agent
         dones = {}
         for id in self.current_frame.keys():
-            dist = np.linalg.norm(np.array(self.current_frame[id]) - np.array(self.goal_data[id]))
-            # end conditions: reach goal or end frame
-            if dist < self.target_circle_width or self.frame_number == self.trajectorys[id][-1][2]:
+            if self.frame_number == self.trajectorys[id][-1][2]: # end condition1: end frame
                 dones[id] = True
             else:
-                dones[id] = False
-        # end condition2
-        if self.test_flag:
-            if self.frame_number == self.end_frame:
-                done = True
-        else:
-            if self.frame_number == self.end_frame + int(self.relaxed_steps*self.frame_interval):
-                done = True
-        # end condition 3
-        if self.time_steps > self._max_episode_steps:
-            done = True
+                dist = np.linalg.norm(np.array(self.current_frame[id]) - np.array(self.goal_data[id]))
+                if dist < self.target_circle_width: # end conditions2: reach goal
+                    dones[id] = True
+                else:
+                    dones[id] = False
         
+        
+        # get next states
+        next_states = self._get_multi_observations()
 
-        # get new observation
-        current_position = np.array([self.current_frame[self.agent_id][0], self.current_frame[self.agent_id][1]])
-        goal_v = np.array(self.trajectorys[self.agent_id][-1][:2])-np.array(self.trajectorys[self.agent_id][0][:2])
-        r_matrix = self._rotate_matrix_v(goal_v)
-        next_state = self._get_ar_relative_graph_observation(self.agent_id, r_matrix, self.frame_number, current_position, self.current_frame, self.past_frames)
+        # compute rewards for each agent: useless actually
+        rewards = {}
+        for id in self.current_frame.keys():
+            rewards[id] = 0
+
+        # compute episode done info, based on the target agent
+        dist = np.linalg.norm(np.array(self.current_frame[self.agent_id]) - np.array(self.goal_data[self.agent_id]))
+        if dist < self.target_circle_width or self.frame_number == self.end_frame:
+            episode_done_info = True
+
+
+        # secure check
+        assert self.frame_number <= self.end_frame
         
-        return next_states, rewards, dones, {}
-    
+        return next_states, rewards, dones, episode_done_info    
 
     # from start frame to end frame of target agent, render all agents by policy
     def step_all(self, policy, flow_ids):

@@ -18,8 +18,9 @@ class NormalizedEnv(gym.Wrapper):
 
         self.scale = env.action_space.high
 
-    def step(self, action, policy):
-        if self.env.step_mode=='multi':
-            return self.env.step_multi(action * self.scale, policy)
-        else:
-            return self.env.step(action * self.scale)
+    def step(self, actions):
+        # scale the actions
+        scaled_actions = {}
+        for id in actions.keys():
+            scaled_actions[id] = actions[id] * self.scale
+        return self.env.step(scaled_actions)

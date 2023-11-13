@@ -97,39 +97,51 @@ class Buffer(SerializedBuffer):
         }, path)
 
 
+
+
 class RolloutBuffer:
 
     def __init__(self, buffer_size, state_shape, action_shape, device, mix=1):
-        self._n = 0
-        self._p = 0
-        self.mix = mix
-        self.buffer_size = buffer_size
-        self.total_size = mix * buffer_size
+        self._n = 0         # number of all samples
+        self._c = 0         # number of completed samples
         self.device = device
 
-        self.states = [None for i in range(self.total_size)]
-        self.actions = torch.empty(
-            (self.total_size, *action_shape), dtype=torch.float, device=device)
-        self.rewards = torch.empty(
-            (self.total_size, 1), dtype=torch.float, device=device)
-        self.dones = torch.empty(
-            (self.total_size, 1), dtype=torch.float, device=device)
-        self.log_pis = torch.empty(
-            (self.total_size, 1), dtype=torch.float, device=device)
-        self.next_states = [None for i in range(self.total_size)]
+        self.states = {}
+        self.actions = {}
+        self.rewards = {}
+        self.dones = {}
+        self.log_pis = {}
+        self.next_states = {}
+
+        # self.states = [None for i in range(self.total_size)]
+        # self.actions = torch.empty(
+        #     (self.total_size, *action_shape), dtype=torch.float, device=device)
+        # self.rewards = torch.empty(
+        #     (self.total_size, 1), dtype=torch.float, device=device)
+        # self.dones = torch.empty(
+        #     (self.total_size, 1), dtype=torch.float, device=device)
+        # self.log_pis = torch.empty(
+        #     (self.total_size, 1), dtype=torch.float, device=device)
+        # self.next_states = [None for i in range(self.total_size)]
         # self.next_states = torch.empty(
         #     (self.total_size, *state_shape), dtype=torch.float, device=device)
 
-    def append(self, state, action, reward, done, log_pi, next_state):
-        self.states[self._p] = state.to(self.device)      #(torch.from_numpy(state))
-        self.actions[self._p].copy_(torch.from_numpy(action))
-        self.rewards[self._p] = float(reward)
-        self.dones[self._p] = float(done)
-        self.log_pis[self._p] = float(log_pi)
-        self.next_states[self._p] = next_state.to(self.device)       #(torch.from_numpy(next_state))
+    def append(self, states, actions, rewards, dones, log_pis, next_states):
+        for id in states.keys():
+            if id not in self.states.keys():                           # create new key
+                self.states[id] = [states[id].to(self.device)]
+                self.actions[id] = [torch.from_numpy(actions[id])]
+                self.rewards[id] = [float(rewards[id])]
+                self.dones[id] = [float(dones[id])]
+                self.log_pis[id] = [next_states[id].to(self.device)]
+            else:                                                      # fill in existing key
+                self.states[id].append(states[id].to(self.device))
+                self.actions[id].append(torch.from_numpy(actions[id]))
+                self.rewards[id].append(float(rewards[id]))
+                self.dones[id].append(float(dones[id]))
+                self.log_pis[id].append(next_states[id].to(self.device))
 
-        self._p = (self._p + 1) % self.total_size
-        self._n = min(self._n + 1, self.total_size)
+        self._n += len(states.keys())
 
     def get(self):
         assert self._p % self.buffer_size == 0
@@ -164,6 +176,13 @@ class RolloutBuffer:
             next_states
         )
     
+    def clear(self):
+        self.states = {}
+        self.actions = {}
+        self.rewards = {}
+        self.dones = {}
+        self.log_pis = {}
+        self.next_states = {}
 
 class SeparatedRolloutBuffer:
 

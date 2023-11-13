@@ -17,19 +17,27 @@ class Algorithm(ABC):
         self.device = device
         self.gamma = gamma
 
-    def explore(self, state):
-        # state = torch.tensor(state, dtype=torch.float, device=self.device)
-        state = state.to(self.device)
-        with torch.no_grad():
-            action, log_pi = self.actor.sample(state)          #(state.unsqueeze_(0))
-        return action.cpu().numpy()[0], log_pi.item()
+    def explore(self, states):
+        # sample actions with noise
+        actions = {}
+        log_pis = {}
+        for id, state in states.items():
+            state = state.to(self.device)
+            with torch.no_grad():
+                action, log_pi = self.actor.sample(state)
+            actions[id] = action.cpu().numpy()[0]
+            log_pis[id] = log_pi.item()        
+        return actions, log_pis
 
-    def exploit(self, state):
-        # state = torch.tensor(state, dtype=torch.float, device=self.device)
-        state = state.to(self.device)
-        with torch.no_grad():
-            action = self.actor(state)          #(state.unsqueeze_(0))
-        return action.cpu().numpy()[0]
+    def exploit(self, states):
+        # sample action without noise
+        actions = {}
+        for id, state in states.items():
+            state = state.to(self.device)
+            with torch.no_grad():
+                action = self.actor(state)       
+            actions[id] = action.cpu().numpy()[0]   
+        return actions
 
     @abstractmethod
     def is_update(self, step):

@@ -42,14 +42,14 @@ class Trainer:
         # Episode's timestep.
         t = 0
         # Initialize the environment.
-        state = self.env.reset()
+        states = self.env.reset()
 
         pbar = tqdm(total=self.eval_interval)
 
         for step in range(1, self.num_steps + 1):
             # Pass to the algorithm to update state and episode timestep.
             pbar.update(1)
-            state, t = self.algo.step(self.env, state, t, step)
+            states, t = self.algo.step(self.env, states, t, step)
 
             # Update the algorithm whenever ready.
             if self.algo.is_update(step):
