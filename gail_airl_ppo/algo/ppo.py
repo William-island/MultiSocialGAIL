@@ -62,7 +62,7 @@ class PPO(Algorithm):
 
     def is_update(self, step):
         # return step % self.rollout_length == 0
-        print(f'{step}: {self.buffer._c}   |    {self.buffer._n}')
+        # print(f'{step}: {self.buffer._c}   |    {self.buffer._n}')
         return self.buffer.is_full()
 
     def step(self, env, states, t, step):
@@ -75,6 +75,7 @@ class PPO(Algorithm):
         self.buffer.append(states, actions, rewards, dones, log_pis, extra_info['next_states_imaginary'])
 
         if extra_info['episode_done']:
+            # print('reset!')
             t = 0
             next_states = env.reset()
 

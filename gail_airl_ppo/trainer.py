@@ -48,7 +48,7 @@ class Trainer:
 
         for step in range(1, self.num_steps + 1):
             # Pass to the algorithm to update state and episode timestep.
-            # pbar.update(1)
+            pbar.update(1)
             states, t = self.algo.step(self.env, states, t, step)
 
             # Update the algorithm whenever ready.
@@ -80,30 +80,31 @@ class Trainer:
         sleep(10)
 
     def evaluate(self, step):
-        mean_return = 0.0
+        # mean_return = 0.0
         frechet_distance = 0.0
         fde = 0.0
 
         for _ in range(self.num_eval_episodes):
-            state = self.env_test.reset()
-            episode_return = 0.0
-            done = False
+            states = self.env_test.reset()
+            # episode_return = 0.0
+            episode_done = False
 
-            while (not done):
-                action = self.algo.exploit(state)
+            while (not episode_done):
+                actions = self.algo.exploit(states)
                 # state, reward, done, _ = self.env_test.step(action)
-                state, reward, done, _ = self.env_test.step(action, self.algo)
-                episode_return += reward
+                states, rewards, dones, extra_info = self.env_test.step(actions)
+                # episode_return += reward
+                episode_done = extra_info['episode_done']
 
-            mean_return += episode_return / self.num_eval_episodes
+            # mean_return += episode_return / self.num_eval_episodes
             frechet_distance += self.env_test.compute_Frechet_Distance() / self.num_eval_episodes
             fde += self.env_test.compute_FDE() / self.num_eval_episodes
 
-        self.writer.add_scalar('test/return', mean_return, step)
+        # self.writer.add_scalar('test/return', mean_return, step)
         self.writer.add_scalar('test/frechet_distance', frechet_distance, step)
         self.writer.add_scalar('test/fde', fde, step)
         print(f'Num steps: {step:<6}   '
-              f'Return: {mean_return:<5.1f}   '
+            #   f'Return: {mean_return:<5.1f}   '
               f'Frechet Distance: {frechet_distance:<5.2f}   '
               f'FDE: {fde:<5.2f}   '
               f'Time: {self.time}')

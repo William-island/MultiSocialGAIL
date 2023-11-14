@@ -138,7 +138,7 @@ class RolloutBuffer:
                 self.all_log_pis[id].append([float(log_pis[id])])
                 self.all_next_states[id].append(next_states[id].to(self.device))
             # move trajectories that completed to the buffer
-            if dones[id]: #& len(self.all_actions[id])>1
+            if dones[id] and len(self.all_actions[id])>1: #& len(self.all_actions[id])>1
                 self.states.extend(self.all_states[id])
                 del self.all_states[id]
                 self.actions.extend(self.all_actions[id])
