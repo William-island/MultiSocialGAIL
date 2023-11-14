@@ -62,6 +62,7 @@ class PPO(Algorithm):
 
     def is_update(self, step):
         # return step % self.rollout_length == 0
+        print(f'{step}: {self.buffer._c}   |    {self.buffer._n}')
         return self.buffer.is_full()
 
     def step(self, env, states, t, step):

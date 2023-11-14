@@ -125,18 +125,20 @@ class RolloutBuffer:
         for id in states.keys():
             if id not in self.all_states.keys():                           # create new key
                 self.all_states[id] = [states[id].to(self.device)]
-                self.all_actions[id] = [torch.from_numpy(actions[id])]
-                self.all_rewards[id] = [float(rewards[id])]
-                self.all_dones[id] = [float(dones[id])]
-                self.all_log_pis[id] = [next_states[id].to(self.device)]
+                self.all_actions[id] = [actions[id]]
+                self.all_rewards[id] = [[float(rewards[id])]]
+                self.all_dones[id] = [[float(dones[id])]]
+                self.all_log_pis[id] = [[float(log_pis[id])]]
+                self.all_next_states[id] = [next_states[id].to(self.device)]
             else:                                                      # fill in existing key
                 self.all_states[id].append(states[id].to(self.device))
-                self.all_actions[id].append(torch.from_numpy(actions[id]))
-                self.all_rewards[id].append(float(rewards[id]))
-                self.all_dones[id].append(float(dones[id]))
-                self.all_log_pis[id].append(next_states[id].to(self.device))
+                self.all_actions[id].append(actions[id])
+                self.all_rewards[id].append([float(rewards[id])])
+                self.all_dones[id].append([float(dones[id])])
+                self.all_log_pis[id].append([float(log_pis[id])])
+                self.all_next_states[id].append(next_states[id].to(self.device))
             # move trajectories that completed to the buffer
-            if dones[id] & len(self.all_actions[id])>1:
+            if dones[id]: #& len(self.all_actions[id])>1
                 self.states.extend(self.all_states[id])
                 del self.all_states[id]
                 self.actions.extend(self.all_actions[id])
@@ -147,14 +149,13 @@ class RolloutBuffer:
                 del self.all_dones[id]
                 self.log_pis.extend(self.all_log_pis[id])
                 del self.all_log_pis[id]
-                self.next_states.extend(self.all_states[id])
-                del self.all_states[id]
+                self.next_states.extend(self.all_next_states[id])
+                del self.all_next_states[id]
 
         self._n += len(states.keys())
         self._c = len(self.states)  # current buffer length
 
     def is_full(self):
-        print(self._c)
         return self._c >= self.buffer_size
 
     def get(self):
@@ -162,10 +163,10 @@ class RolloutBuffer:
         idxes = slice(0, self.buffer_size)
         return (
             self.states[idxes],
-            torch.tensor(self.actions,dtype=torch.float, device=self.device)[idxes],
-            torch.tensor(self.rewards,dtype=torch.float, device=self.device)[idxes],
-            torch.tensor(self.dones,dtype=torch.float, device=self.device)[idxes],
-            torch.tensor(self.log_pis,dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(np.array(self.actions),dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(np.array(self.rewards),dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(np.array(self.dones),dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(np.array(self.log_pis),dtype=torch.float, device=self.device)[idxes],
             self.next_states[idxes]
         )
 
@@ -182,10 +183,10 @@ class RolloutBuffer:
 
         return (
             states,
-            torch.tensor(self.actions,dtype=torch.float, device=self.device)[idxes],
-            torch.tensor(self.rewards,dtype=torch.float, device=self.device)[idxes],
-            torch.tensor(self.dones,dtype=torch.float, device=self.device)[idxes],
-            torch.tensor(self.log_pis,dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(np.array(self.actions),dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(np.array(self.rewards),dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(np.array(self.dones),dtype=torch.float, device=self.device)[idxes],
+            torch.tensor(np.array(self.log_pis),dtype=torch.float, device=self.device)[idxes],
             next_states
         )
     
