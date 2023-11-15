@@ -25,15 +25,9 @@ class Algorithm(ABC):
         batch_states = Batch.from_data_list(list(states.values())).to(self.device)
         with torch.no_grad():
             batch_actions, batch_log_pis = self.actor.sample(batch_states)
-        for id in states.keys():
-            actions[id] = batch_actions[id].cpu().numpy()[0]
-            log_pis[id] = batch_log_pis[id].item()
-        # for id, state in states.items():
-        #     state = state.to(self.device)
-        #     with torch.no_grad():
-        #         action, log_pi = self.actor.sample(state)
-        #     actions[id] = action.cpu().numpy()[0]
-        #     log_pis[id] = log_pi.item()        
+        for k,id in enumerate(states.keys()):
+            actions[id] = batch_actions[k].cpu().numpy()          #[0]
+            log_pis[id] = batch_log_pis[k].item()    
         return actions, log_pis
 
     def exploit(self, states):
@@ -42,13 +36,8 @@ class Algorithm(ABC):
         batch_states = Batch.from_data_list(list(states.values())).to(self.device)
         with torch.no_grad():
             batch_actions = self.actor(batch_states)
-        for id in states.keys():
-            actions[id] = batch_actions[id].cpu().numpy()[0]
-        # for id, state in states.items():
-        #     state = state.to(self.device)
-        #     with torch.no_grad():
-        #         action = self.actor(state)       
-        #     actions[id] = action.cpu().numpy()[0]   
+        for k,id in enumerate(states.keys()):
+            actions[id] = batch_actions[k].cpu().numpy()          #[0]  
         return actions
 
     @abstractmethod

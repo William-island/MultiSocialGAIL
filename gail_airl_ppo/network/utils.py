@@ -53,7 +53,7 @@ def reparameterize(in_means, log_stds):
     dist = Normal(mean, std)
     actions = dist.sample()
     actions = torch.clamp(actions, -1, 1)
-    return actions, dist.log_prob(actions).sum()
+    return actions, dist.log_prob(actions).sum(dim=1,keepdim=True)
 
 
 def atanh(x):
