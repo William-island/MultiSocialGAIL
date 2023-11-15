@@ -177,17 +177,17 @@ class RolloutBuffer:
         states, next_states = [], []
         for i in idxes:
             s = self.states[i]
-            ns = self.next_states[i]
+            # ns = self.next_states[i]
             states.append(s)
-            next_states.append(ns)
+            # next_states.append(ns)
 
         return (
             states,
             torch.tensor(np.array(self.actions),dtype=torch.float, device=self.device)[idxes],
-            torch.tensor(np.array(self.rewards),dtype=torch.float, device=self.device)[idxes],
-            torch.tensor(np.array(self.dones),dtype=torch.float, device=self.device)[idxes],
-            torch.tensor(np.array(self.log_pis),dtype=torch.float, device=self.device)[idxes],
-            next_states
+            # torch.tensor(np.array(self.rewards),dtype=torch.float, device=self.device)[idxes],
+            # torch.tensor(np.array(self.dones),dtype=torch.float, device=self.device)[idxes],
+            # torch.tensor(np.array(self.log_pis),dtype=torch.float, device=self.device)[idxes],
+            # next_states
         )
     
     def clear(self):

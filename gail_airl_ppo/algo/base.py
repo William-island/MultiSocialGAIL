@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import os
 import numpy as np
 import torch
+from torch_geometric.data import Batch
 
 
 class Algorithm(ABC):
@@ -21,22 +22,33 @@ class Algorithm(ABC):
         # sample actions with noise
         actions = {}
         log_pis = {}
-        for id, state in states.items():
-            state = state.to(self.device)
-            with torch.no_grad():
-                action, log_pi = self.actor.sample(state)
-            actions[id] = action.cpu().numpy()[0]
-            log_pis[id] = log_pi.item()        
+        batch_states = Batch.from_data_list(list(states.values())).to(self.device)
+        with torch.no_grad():
+            batch_actions, batch_log_pis = self.actor.sample(batch_states)
+        for id in states.keys():
+            actions[id] = batch_actions[id].cpu().numpy()[0]
+            log_pis[id] = batch_log_pis[id].item()
+        # for id, state in states.items():
+        #     state = state.to(self.device)
+        #     with torch.no_grad():
+        #         action, log_pi = self.actor.sample(state)
+        #     actions[id] = action.cpu().numpy()[0]
+        #     log_pis[id] = log_pi.item()        
         return actions, log_pis
 
     def exploit(self, states):
         # sample action without noise
         actions = {}
-        for id, state in states.items():
-            state = state.to(self.device)
-            with torch.no_grad():
-                action = self.actor(state)       
-            actions[id] = action.cpu().numpy()[0]   
+        batch_states = Batch.from_data_list(list(states.values())).to(self.device)
+        with torch.no_grad():
+            batch_actions = self.actor(batch_states)
+        for id in states.keys():
+            actions[id] = batch_actions[id].cpu().numpy()[0]
+        # for id, state in states.items():
+        #     state = state.to(self.device)
+        #     with torch.no_grad():
+        #         action = self.actor(state)       
+        #     actions[id] = action.cpu().numpy()[0]   
         return actions
 
     @abstractmethod
