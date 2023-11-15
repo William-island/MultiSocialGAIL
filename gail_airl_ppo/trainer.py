@@ -44,11 +44,11 @@ class Trainer:
         # Initialize the environment.
         states = self.env.reset()
 
-        pbar = tqdm(total=self.eval_interval)
+        # pbar = tqdm(total=self.eval_interval)
 
         for step in range(1, self.num_steps + 1):
             # Pass to the algorithm to update state and episode timestep.
-            pbar.update(1)
+            # pbar.update(1)
             states, t = self.algo.step(self.env, states, t, step)
 
             # Update the algorithm whenever ready.
@@ -57,13 +57,13 @@ class Trainer:
 
             # Evaluate regularly.
             if step % self.eval_interval == 0:
-                pbar.close()
+                # pbar.close()
 
                 self.evaluate(step)
                 self.algo.save_models(
                     os.path.join(self.model_dir, f'step{step}'))
                 
-                pbar = tqdm(total=self.eval_interval)
+                # pbar = tqdm(total=self.eval_interval)
 
 
             # if step == 10:

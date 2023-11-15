@@ -45,7 +45,7 @@ def run(args):
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
-    p.add_argument('--buffer', type=str, default='./expert_traj/small_tester.pth')  # small_tester.pth | graph_demos.pth 
+    p.add_argument('--buffer', type=str, default='./expert_traj/graph_demos.pth')  # small_tester.pth | graph_demos.pth 
     p.add_argument('--rollout_length', type=int, default=2048)  # 2048
     p.add_argument('--num_steps', type=int, default=int(4e4))   # 5.8e5 | 1.2e6
     p.add_argument('--eval_interval', type=int, default=500)       #  5000
