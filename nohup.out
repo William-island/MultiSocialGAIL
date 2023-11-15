@@ -1,0 +1,101 @@
+/home/william/anaconda3/envs/pygail/lib/python3.8/site-packages/torch_geometric/utils/scatter.py:93: UserWarning: The usage of `scatter(reduce='max')` can be accelerated via the 'torch-scatter' package, but it was not found
+  warnings.warn(f"The usage of `scatter(reduce='{reduce}')` "
+pygame 2.3.0 (SDL 2.24.2, Python 3.8.16)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+Training dataset size:8863
+Now env target circle width: 1.0
+relaxed frames: 400
+Testing dataset size:3799
+Now env target circle width: 1.0
+Loading expert demo from ./expert_traj/graph_demos.pth...
+Expert demo size: 626665
+Num steps: 500      Frechet Distance: 8.40    FDE: 8.40    Time: 0:04:07
+Num steps: 1000     Frechet Distance: 10.84   FDE: 10.00   Time: 0:10:57
+Num steps: 1500     Frechet Distance: 22.36   FDE: 21.68   Time: 0:17:09
+Num steps: 2000     Frechet Distance: 27.49   FDE: 27.49   Time: 0:26:29
+Num steps: 2500     Frechet Distance: 28.69   FDE: 28.69   Time: 0:31:45
+Num steps: 3000     Frechet Distance: 15.98   FDE: 15.62   Time: 0:41:44
+Num steps: 3500     Frechet Distance: 21.16   FDE: 15.96   Time: 0:47:13
+Num steps: 4000     Frechet Distance: 11.71   FDE: 8.20    Time: 0:51:37
+Num steps: 4500     Frechet Distance: 16.00   FDE: 13.50   Time: 0:57:31
+Num steps: 5000     Frechet Distance: 26.47   FDE: 10.14   Time: 1:02:47
+Num steps: 5500     Frechet Distance: 26.33   FDE: 20.42   Time: 1:08:27
+Num steps: 6000     Frechet Distance: 19.42   FDE: 13.22   Time: 1:14:25
+Num steps: 6500     Frechet Distance: 25.73   FDE: 17.87   Time: 1:20:15
+Num steps: 7000     Frechet Distance: 24.71   FDE: 22.39   Time: 1:24:46
+Num steps: 7500     Frechet Distance: 19.91   FDE: 16.11   Time: 1:29:35
+Num steps: 8000     Frechet Distance: 10.17   FDE: 7.86    Time: 1:36:27
+Num steps: 8500     Frechet Distance: 16.52   FDE: 11.98   Time: 1:42:10
+Num steps: 9000     Frechet Distance: 11.30   FDE: 3.73    Time: 1:47:08
+Num steps: 9500     Frechet Distance: 21.97   FDE: 7.18    Time: 1:53:12
+Num steps: 10000    Frechet Distance: 4.84    FDE: 2.57    Time: 1:58:47
+Num steps: 10500    Frechet Distance: 8.90    FDE: 5.85    Time: 2:05:37
+Num steps: 11000    Frechet Distance: 5.66    FDE: 3.34    Time: 2:10:47
+Num steps: 11500    Frechet Distance: 3.05    FDE: 1.98    Time: 2:16:31
+Num steps: 12000    Frechet Distance: 8.14    FDE: 7.48    Time: 2:24:35
+Num steps: 12500    Frechet Distance: 5.58    FDE: 3.31    Time: 2:29:02
+Num steps: 13000    Frechet Distance: 5.23    FDE: 3.27    Time: 2:35:36
+Num steps: 13500    Frechet Distance: 6.60    FDE: 0.94    Time: 2:40:31
+Num steps: 14000    Frechet Distance: 12.53   FDE: 11.00   Time: 2:51:42
+Num steps: 14500    Frechet Distance: 3.29    FDE: 2.77    Time: 2:55:35
+Num steps: 15000    Frechet Distance: 3.78    FDE: 2.07    Time: 3:00:00
+Num steps: 15500    Frechet Distance: 18.45   FDE: 15.84   Time: 3:04:38
+Num steps: 16000    Frechet Distance: 2.82    FDE: 0.80    Time: 3:10:51
+Num steps: 16500    Frechet Distance: 13.22   FDE: 4.44    Time: 3:17:09
+Num steps: 17000    Frechet Distance: 13.05   FDE: 4.88    Time: 3:24:33
+Num steps: 17500    Frechet Distance: 11.03   FDE: 10.32   Time: 3:30:40
+Num steps: 18000    Frechet Distance: 4.64    FDE: 0.71    Time: 3:35:10
+Num steps: 18500    Frechet Distance: 5.36    FDE: 1.72    Time: 3:41:57
+Num steps: 19000    Frechet Distance: 2.13    FDE: 0.69    Time: 3:46:43
+Num steps: 19500    Frechet Distance: 78.30   FDE: 77.59   Time: 3:52:23
+Num steps: 20000    Frechet Distance: 2.20    FDE: 1.77    Time: 3:58:07
+Num steps: 20500    Frechet Distance: 4.52    FDE: 0.65    Time: 4:04:35
+Num steps: 21000    Frechet Distance: 3.99    FDE: 0.68    Time: 4:10:24
+Num steps: 21500    Frechet Distance: 1.90    FDE: 0.79    Time: 4:16:45
+Num steps: 22000    Frechet Distance: 5.50    FDE: 0.64    Time: 4:20:53
+Num steps: 22500    Frechet Distance: 5.81    FDE: 0.66    Time: 4:25:37
+Num steps: 23000    Frechet Distance: 3.60    FDE: 2.41    Time: 4:30:57
+Num steps: 23500    Frechet Distance: 5.72    FDE: 0.78    Time: 4:36:56
+Num steps: 24000    Frechet Distance: 4.01    FDE: 0.61    Time: 4:41:50
+Num steps: 24500    Frechet Distance: 1.50    FDE: 0.51    Time: 4:47:41
+Num steps: 25000    Frechet Distance: 2.29    FDE: 0.75    Time: 4:54:07
+Num steps: 25500    Frechet Distance: 1.60    FDE: 0.61    Time: 4:59:06
+Num steps: 26000    Frechet Distance: 3.17    FDE: 0.69    Time: 5:03:36
+Num steps: 26500    Frechet Distance: 3.11    FDE: 0.70    Time: 5:10:43
+Num steps: 27000    Frechet Distance: 10.64   FDE: 0.64    Time: 5:14:12
+Num steps: 27500    Frechet Distance: 4.56    FDE: 0.60    Time: 5:20:40
+Num steps: 28000    Frechet Distance: 7.06    FDE: 0.55    Time: 5:26:21
+Num steps: 28500    Frechet Distance: 3.29    FDE: 0.47    Time: 5:31:09
+Num steps: 29000    Frechet Distance: 5.41    FDE: 0.68    Time: 5:37:11
+Num steps: 29500    Frechet Distance: 2.17    FDE: 0.79    Time: 5:42:04
+Num steps: 30000    Frechet Distance: 7.12    FDE: 0.49    Time: 5:46:27
+Num steps: 30500    Frechet Distance: 6.27    FDE: 0.77    Time: 5:50:38
+Num steps: 31000    Frechet Distance: 1.51    FDE: 0.74    Time: 5:56:17
+Num steps: 31500    Frechet Distance: 2.39    FDE: 0.65    Time: 6:00:26
+Num steps: 32000    Frechet Distance: 2.79    FDE: 0.65    Time: 6:04:28
+Num steps: 32500    Frechet Distance: 3.19    FDE: 2.16    Time: 6:10:48
+Num steps: 33000    Frechet Distance: 2.95    FDE: 0.66    Time: 6:15:17
+Num steps: 33500    Frechet Distance: 0.99    FDE: 0.57    Time: 6:20:21
+Num steps: 34000    Frechet Distance: 2.94    FDE: 0.60    Time: 6:25:08
+Num steps: 34500    Frechet Distance: 8.01    FDE: 0.67    Time: 6:28:30
+Num steps: 35000    Frechet Distance: 2.32    FDE: 0.68    Time: 6:33:43
+Num steps: 35500    Frechet Distance: 2.53    FDE: 0.60    Time: 6:37:59
+Num steps: 36000    Frechet Distance: 7.40    FDE: 0.68    Time: 6:42:07
+Num steps: 36500    Frechet Distance: 3.87    FDE: 0.61    Time: 6:46:51
+Num steps: 37000    Frechet Distance: 3.78    FDE: 0.47    Time: 6:52:55
+Num steps: 37500    Frechet Distance: 3.87    FDE: 1.01    Time: 7:01:49
+Num steps: 38000    Frechet Distance: 2.31    FDE: 0.61    Time: 7:06:48
+Num steps: 38500    Frechet Distance: 9.95    FDE: 0.81    Time: 7:12:19
+Num steps: 39000    Frechet Distance: 3.36    FDE: 1.06    Time: 7:18:07
+Num steps: 39500    Frechet Distance: 5.17    FDE: 0.59    Time: 7:22:40
+Num steps: 40000    Frechet Distance: 1.67    FDE: 0.56    Time: 7:26:14
+Traceback (most recent call last):
+  File "train_imitation.py", line 79, in <module>
+    run(args)
+  File "train_imitation.py", line 43, in run
+    trainer.train()
+  File "/home/william/MultiSocialGAIL/MultiSocialGAIL-v1/gail_airl_ppo/trainer.py", line 76, in train
+    self.evaluate_saved_models(0)  
+  File "/home/william/MultiSocialGAIL/MultiSocialGAIL-v1/gail_airl_ppo/trainer.py", line 118, in evaluate_saved_models
+    with open('./gail_airl_ppo/test_people.pkl','rb') as f:
+FileNotFoundError: [Errno 2] No such file or directory: './gail_airl_ppo/test_people.pkl'

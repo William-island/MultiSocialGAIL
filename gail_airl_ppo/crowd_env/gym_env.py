@@ -319,7 +319,7 @@ class CrowdEnv(gym.Env):  # can extend from gym.Env
         return ade
     
     def compute_FDE(self):
-        fde = euclidean(self.current_position, self.old_traj[-1])
+        fde = euclidean(self.new_traj[-1], self.old_traj[-1])
         return fde
     
     def compute_Frechet_Distance(self):
